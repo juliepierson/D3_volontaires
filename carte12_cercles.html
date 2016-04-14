@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>D3: tests</title>
+		<script type="text/javascript" src="d3/d3.v3.js"></script>
+		<script src="http://d3js.org/d3.geo.projection.v0.min.js" charset="utf-8"></script>
+		<link href='http://fonts.googleapis.com/css?family=Open+Sans:400,400italic,600,600italic,700,700italic&amp;subset=latin,latin-ext' rel='stylesheet' type='text/css'>
+		<link rel="stylesheet" type="text/css" href="carte_cercles.css">
+	</head>
+	<body>
+	
+		<div id="container">
+		
+			<div id="chapeau">
+				<h1>Répartition mondiale des volontaires français</h1>
+				<p>Données fictives</p>
+			</div>
+		
+			<div id="menu">
+				<div id="menuleft">
+					<p>Type de carte :</p>
+					<p>Dispositif de volontariat :</p>
+				</div>
+				<div id="menuright">
+					<form name="fmaptype">
+						<ul>
+							<li>
+								<input class="rmt" type="radio" id="cp" name="radiomaptype" value="cp" Checked>
+								<label for="cp">Cercles proportionnels</label>
+								<input class="rmt" type="radio" id="ana" name="radiomaptype" value="ana">
+								<label for="ana">Anamorphose</label>
+							</li>
+							<li>
+								<input class = "rd" type="radio" id="tous" name="radiovoltype" value="Tous" Checked>
+								<label for="tous">Tous</label>
+								<input class = "rd" type="radio" id="sci" name="radiovoltype" value="SCI">
+								<label for="sci">SCI</label>
+								<input class = "rd" type="radio" id="sve" name="radiovoltype" value="SVE">
+								<label for="sve">SVE</label>
+								<input class = "rd" type="radio" id="vp" name="radiovoltype" value="VP">
+								<label for="vp">VP</label>
+								<input class = "rd" type="radio" id="vsi" name="radiovoltype" value="VSI">
+								<label for="vsi">VSI</label>
+							</li>
+						</ul>
+					</form>
+				</div>
+			</div>		
+		
+			<div id="main">
+			
+				<div id="desc">
+					<div id="type">
+						<h2>Légende et explications</h2>
+						<p class="desc_cp">Ceci est une carte en cercles proportionnels.</p>
+						<p class="desc_ana" style="display:none">Ceci est une carte en anamorphose.</p>
+					</div>
+					<div id="dispo">
+						<h2>Dispositif de volontariat</h2>
+						<p class="dispo_tous">Tous les dispositifs de volontariat sont représentés.</p>
+						<p class="dispo_sci" style="display:none">SCI</p>
+						<p class="dispo_sve" style="display:none">SVE</p>
+						<p class="dispo_vp" style="display:none">VP</p>
+						<p class="dispo_vsi" style="display:none">VSI</p>
+					</div>
+				</div>
+			
+				<div id="years">
+				</div>
+				
+				<div id="map">
+				</div>
+				
+			</div>
+			
+		</div>
+	
+	
+		<script type="text/javascript" src="carte12_cercles.js"></script>
+	</body>
+</html>

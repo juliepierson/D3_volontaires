@@ -1,0 +1,228 @@
+/*	________________________
+	|       Chapeau         |
+	|_______________________|
+	| menuleft |  menuright |
+	|__________|____________|
+	|     |               | |
+	|type |     map       |y|
+	|     |               |e|
+	|_____|               |a|
+	|     |               |r|
+	|dispo|               |s|
+	|     |               | |
+	|_____|_______________|_|
+*/
+
+
+html {
+	color:#323232;
+	font-family:"Open Sans", helvetica, arial, verdana;
+	font-size: 0.9em;
+	text-align: justify;
+}
+body{
+	min-height: 100%;
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+h1{
+	font-size: 2em;
+}
+h2{
+	font-size: 1em;
+}
+ul{
+	list-style: none;
+}
+li{
+	margin-bottom: 10px;
+}
+
+/* background container (contient tout le reste) */
+#container {
+	position:absolute;
+	width:1260px;
+	height:700px;
+}
+/* chapeau */
+#chapeau {
+	position:absolute;
+	width:1290px;
+	height:90px;
+	padding: 5px;
+}
+/* menus : contient menuleft et menuright) */
+#menu {
+	position: absolute;
+	margin-top: 100px;
+	width:1300px;
+	height:100px;
+}
+/* menus, left part */
+#menuleft {
+	position: absolute;
+	width:400px;
+	height:100px;
+	text-align: right;
+}
+/* menus, right part */
+#menuright {
+	position: absolute;
+	margin-left: 400px;
+	width:900px;
+	height:100px;
+}
+/* main : contient desc, map and years */
+#main {
+	position: absolute;
+	margin-top: 200px;
+	width: 1260px;
+	height: 500px;
+}
+/* desc : contient type et dispo */
+#desc {
+	background: #eee;
+	position: absolute;
+	width: 190px;
+	height: 490px;
+	padding: 5px;
+	font-size: 0.9em;
+}
+/* map */
+#map {
+	position: absolute;
+	margin-left: 200px;
+	width: 960px;
+	height: 500px;
+}
+/* years */
+#years {
+	position: absolute;
+	margin-left: 1160px;
+	width: 100px;
+	height: 500px;
+}
+/* type : desc for the map type */
+#type {
+	position: absolute;
+	width: 190px;
+	height: 245px;
+}
+/* dispo : desc for the volunteer type */
+#dispo {
+	position: absolute;
+	margin-top: 245px;
+	width: 190px;
+	height: 245px;
+}
+
+.rmt{
+}
+.rd{
+}
+
+/* style des limites du planisphère */
+.plani {
+  stroke: darkgray;
+  stroke-width: 0.5px;
+  fill: none;
+}
+/* style de base des pays */
+path {
+	stroke: grey;
+	stroke-width: 0.4;
+	fill: #eee;
+}
+/* style du triangle de la ligne des années */
+path.triangle {
+	stroke: darkgray;
+	stroke-width: 4;
+	fill: darkgray;
+}
+/* style des cercles proportionnels */
+circle {
+	fill: blue;
+	opacity: 0.5;
+	stroke:blue;
+	stroke-width: 1;
+}
+/* style des cercles proportionnels évidés */
+circle.gros {
+	fill: none;
+	opacity: 0.5;
+	stroke: blue;
+	stroke-width: 2.5;
+}
+/* style des ronds pour les années */
+circle.year {
+	fill: white;
+	opacity: 1;
+	stroke: darkgray;
+	stroke-width: 4;
+	cursor: pointer;
+}
+/* style du rond pour l'année sélectionnée */
+circle.yearselect {
+	fill: rgb(216,226,255);
+	opacity: 1;
+	stroke: darkgray;
+	stroke-width: 4;
+}
+/* style du rond pour la légende */
+circle.legende {
+	opacity: 0.5;
+	stroke: blue;
+}
+/* style des lignes pour la légende */
+line.legende{
+	stroke: #323232;
+	stroke-width: 1;
+	stroke-dasharray: 4, 2;
+}
+/* style des étiquettes pour la légende */
+text.legende{
+	fill: #323232;
+}
+
+/* pour les boutons radio : http://viralpatel.net/blogs/css-radio-button-checkbox-background/ */
+input[type=radio] {
+	display:none;
+}
+input[type=radio] + label {
+    display:inline-block;
+    margin:-2px;
+    padding: 4px 12px;
+    margin-bottom: 0;
+    font-size: 14px;
+    line-height: 20px;
+    color: #333;
+    text-align: center;
+    text-shadow: 0 1px 1px rgba(255,255,255,0.75);
+    vertical-align: middle;
+    cursor: pointer;
+    background-color: #f5f5f5;
+    background-image: -moz-linear-gradient(top,#fff,#e6e6e6);
+    background-image: -webkit-gradient(linear,0 0,0 100%,from(#fff),to(#e6e6e6));
+    background-image: -webkit-linear-gradient(top,#fff,#e6e6e6);
+    background-image: -o-linear-gradient(top,#fff,#e6e6e6);
+    background-image: linear-gradient(to bottom,#fff,#e6e6e6);
+    background-repeat: repeat-x;
+    border: 1px solid #ccc;
+    border-color: #e6e6e6 #e6e6e6 #bfbfbf;
+    border-color: rgba(0,0,0,0.1) rgba(0,0,0,0.1) rgba(0,0,0,0.25);
+    border-bottom-color: #b3b3b3;
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffffffff',endColorstr='#ffe6e6e6',GradientType=0);
+    filter: progid:DXImageTransform.Microsoft.gradient(enabled=false);
+    -webkit-box-shadow: inset 0 1px 0 rgba(255,255,255,0.2),0 1px 2px rgba(0,0,0,0.05);
+    -moz-box-shadow: inset 0 1px 0 rgba(255,255,255,0.2),0 1px 2px rgba(0,0,0,0.05);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.2),0 1px 2px rgba(0,0,0,0.05);
+}
+input[type=radio]:checked + label {
+	background-image: none;
+    outline: 0;
+    -webkit-box-shadow: inset 0 2px 4px rgba(0,0,0,0.15),0 1px 2px rgba(0,0,0,0.05);
+    -moz-box-shadow: inset 0 2px 4px rgba(0,0,0,0.15),0 1px 2px rgba(0,0,0,0.05);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.15),0 1px 2px rgba(0,0,0,0.05);
+	background-color:#e0e0e0;
+}

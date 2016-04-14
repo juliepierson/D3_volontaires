@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>D3: tests</title>
+		<script type="text/javascript" src="d3/d3.v3.js"></script>
+		<script src="http://d3js.org/d3.geo.projection.v0.min.js" charset="utf-8"></script>
+		<style type="text/css">
+		
+			/*	________________________
+				|       Chapeau         |
+				|_______________________|
+				|       Menu            |
+				|_______________________|
+				|     |               | |
+				|type |     map       |y|
+				|     |               |e|
+				|_____|               |a|
+				|     |               |r|
+				|dispo|               |s|
+				|     |               | |
+				|_____|_______________|_|
+			*/
+		
+			body{
+				min-height: 100%;
+				margin: 0;
+				padding: 0;
+				border: 0;
+			}
+			/* background container */
+			#container {
+				background: lightblue;
+				position:absolute;
+				width:1300px;
+				height:850px;
+			}
+			/* chapeau */
+			#chapeau {
+				background: lightblue;
+				position:absolute;
+				width:1300px;
+				height:100px;
+			}
+			/* menus */
+			#menu {
+				background: yellow;
+				position: absolute;
+				margin-top: 100px;
+				width:1300px;
+				height:100px;
+			}
+			/* menus, left part */
+			#menuleft {
+				background: red;
+				position: absolute;
+				width:400px;
+				height:100px;
+			}
+			/* menus, right part */
+			#menuright {
+				background: pink;
+				position: absolute;
+				margin-left: 400px;
+				width:900px;
+				height:100px;
+			}
+			/* part for the descriptions, map and years */
+			#main {
+				background: lightpink;
+				position: absolute;
+				margin-top: 200px;
+				width: 1300px;
+				height: 650px;
+			}
+			/* description for the map type and volunteer type */
+			#desc {
+				background: green;
+				position: absolute;
+				width: 200px;
+				height: 650px;
+			}
+			/* years */
+			#map {
+				background: orange;
+				position: absolute;
+				margin-left: 200px;
+				width: 1000px;
+				height: 650px;
+			}
+			/* map */
+			#years {
+				background: pink;
+				position: absolute;
+				margin-left: 1200px;
+				width: 100px;
+				height: 650px;
+			}
+			/* desc for the map type */
+			#type {
+				background: grey;
+				position: absolute;
+				width: 200px;
+				height: 325px;
+			}
+			/* desc for the volunteer type */
+			#dispo {
+				background: lightgreen;
+				position: absolute;
+				margin-top: 325px;
+				width: 200px;
+				height: 325px;
+			}
+
+		</style>
+	</head>
+	<body>
+		
+		<div id="container">
+		
+			<div id="chapeau">
+				<p>chapeau!</p>
+			</div>
+		
+			<div id="menu">
+				<div id="menuleft">
+					<p>menu left</p>
+				</div>
+				<div id="menuright">
+					<p>menu right</p>
+				</div>
+			</div>		
+		
+			<div id="main">
+			
+				<div id="desc">
+					<div id="type">
+						<p>type de carte</p>
+					</div>
+					<div id="dispo">
+						<p>dispositif</p>
+					</div>
+				</div>
+			
+				<div id="years">
+					<p>years</p>
+				</div>
+				
+				<div id="map">
+					<p>map</p>
+				</div>
+				
+			</div>
+			
+		</div>
+	
+	</body>
+	
+</html>

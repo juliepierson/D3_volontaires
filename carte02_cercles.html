@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>D3: A simple bar chart</title>
+		<script type="text/javascript" src="d3/d3.v3.js"></script>
+		<script src="http://d3js.org/d3.geo.projection.v0.min.js" charset="utf-8"></script>
+		<style type="text/css">
+			path {
+				stroke: white;
+				stroke-width: 0.8;
+				fill: #eee;
+			}
+			circle {
+				fill: blue;
+				opacity: 0.5;
+				stroke: blue;
+				stroke-width: 1;
+			}
+		</style>
+	</head>
+	<body>
+	
+		<script type="text/javascript">
+		
+			var chemin = "data/FV_2011_2012.json";
+			var annees = [11, 12, 13];
+			var encours = 0;
+			var couleur_data = "#ccc";
+			var racine_champ = "NBVOL_";
+			var evide = 100;
+			var duree_transition = 1000;
+			<!-- Width and height for the map -->
+			var wm = 1000;
+			var hm = 800;
+			<!-- Width and height for the years -->
+			var wy = 1000;
+			var hy = 50;
+			<!-- élément svg pour les années -->
+			var svg_y = d3.select("body")
+						.append("svg")
+						.attr("width", wy)
+						.attr("height", hy);
+			<!-- élément svg pour la carte -->
+			var svg_m = d3.select("body")
+						.append("svg")
+						.attr("width", wm)
+						.attr("height", hm);
+			<!-- la projection dans laquelle afficher les données : Robinson -->
+			var projection = d3.geo.robinson()
+					.scale(150);
+			<!-- On crée un nouvel objet path qui traduit le GeoJSON en SVG -->
+			var path = d3.geo.path()
+				.projection(projection);
+			
+			var padding = 20;
+			<!-- crée une échelle pour la représentation des années -->
+			var xScale = d3.scale.linear()
+								<!-- input domain : entre min et max des années -->
+								.domain([d3.min(annees, function(d) { return d; }), d3.max(annees, function(d) { return d; })])
+								<!-- output range : entre 0 et largeur de l'élément, + padding -->
+								.range([0 + padding, wy - padding]);
+				
+				
+			<!-- affiche les années sous forme de frise -->
+			svg_y.selectAll("circle")
+				.data(annees)
+				.enter()
+				.append("circle")
+				.attr("cx", function(d) { return xScale(d); })
+			   .attr("cy", 10)
+			   .attr("r", 5)
+			  	<!-- si on clique sur une année, actualise les données en fonction de l'année -->
+			   .on("click", function(d) {
+			   	<!-- stocke l'année du cercle cliqué -->
+					var encours = d;
+					<!-- update all circles -->
+					svg_m.selectAll("circle")	
+						.transition()
+						.duration(duree_transition)
+						.attr("r", function(d){
+							var nbvol = d.properties[racine_champ + encours];
+							var rayon = 3 * Math.sqrt(nbvol/Math.PI);
+							return rayon;
+						})
+						<!-- si la valeur est suffisamment importante, vide le cercle pour qu'on ne voit que le contour -->
+						.style("fill", function(d) {
+							var value = d.properties[racine_champ + encours]; 
+							if (value > evide) {
+								return "none";
+							} 
+						});
+					<!-- update all countries -->
+					svg_m.selectAll("path")
+						.transition()
+						.duration(duree_transition)
+						.attr("d", path)
+						.style("fill", function(d) {
+							var value = d.properties[racine_champ + encours]; 
+							if (value) {
+								return couleur_data;
+							} 
+						});
+					
+						
+				});
+
+			svg_y.selectAll("text")
+			   .data(annees)
+			   .enter()
+			   .append("text")
+			   .text(function(d) { return ("20" + d); })
+			   .attr("x", function(d) { return xScale(d) - padding; })
+			   .attr("y", 30)
+			   .attr("font-family", "sans-serif")
+			   .attr("font-size", "11px")
+			   .attr("fill", "red");
+			   
+			   
+
+
+			d3.json(chemin, function(json) {
+
+				<!-- affiche les pays, couleur si valeur non nulle -->
+				svg_m.selectAll("path")
+					.data(json.features)
+					.enter()
+					.append("path")
+					.attr("d", path)
+					.style("fill", function(d) {
+						var value = d.properties[racine_champ + "11"]; 
+						if (value) {
+							return couleur_data;
+						} 
+					});
+					
+				<!-- affiche les cercles proportionnels -->
+				svg_m.selectAll("circle")
+					.data(json.features)
+					.enter()
+					.append("circle")
+					.attr("cx", function(d){
+							var centroid = path.centroid(d),
+								x = centroid[0];
+								return x;
+					})
+					.attr("cy", function(d){
+							var centroid = path.centroid(d),
+								y = centroid[1];
+								return y;
+					})
+					<!-- calcule le rayon du cercle pour que la surface varie avec la valeur -->
+					.attr("r", function(d){
+							var nbvol = d.properties[racine_champ + "11"]
+							var rayon = 3 * Math.sqrt(nbvol/Math.PI);
+							return rayon;
+					})
+					<!-- si la valeur est suffisamment importante, vide le cercle pour qu'on ne voit que le contour -->
+					.style("fill", function(d) {
+						var value = d.properties[racine_champ + "11"]; 
+						if (value > evide) {
+							return "none";
+						} 
+					})
+					/* trie les cercles en fonction du nb de vol pour mettre les + petits devant */
+					.sort(function(a,b) {return b.properties[racine_champ + "11"]*1-a.properties[racine_champ + "11"]*1;});
+				
+			});
+			
+			
+
+
+			
+		</script>
+	</body>
+</html>

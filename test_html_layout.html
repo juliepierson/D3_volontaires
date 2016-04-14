@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>D3: tests</title>
+		<script type="text/javascript" src="d3/d3.v3.js"></script>
+		<script src="http://d3js.org/d3.geo.projection.v0.min.js" charset="utf-8"></script>
+		<style type="text/css">
+		
+			/* 2 columns, with top and bottom part for right column */
+			/*	_________________
+				| m  |  years   |
+				| e  |__________|
+				| n  |   map    |
+				| u  |          |
+				|    |          |
+				|____|__________|	
+			*/
+		
+			body{
+				min-height: 100%;
+				margin: 0;
+				padding: 0;
+				border: 0;
+			}
+			/* background container */
+			#container {
+				background: lightblue;
+				position:absolute;
+				width:1000px;
+				height:850px;
+			}
+			/* left column for buttons */
+			#menu {
+				background: yellow;
+				position: absolute;
+				float: left;
+				width:150px;
+				height:850px;
+			}
+			/* right part for the years and map */
+			#main {
+				background: lightpink;
+				position: absolute;
+				margin-left: 150px;
+				width: 850px;
+				height: 850px;
+			}
+			/* top part of the right part for the years */
+			#years {
+				background: orange;
+				position: absolute;
+				width: 850px;
+				height: 100px;
+			}
+			/* bottom part of the right part for the map */
+			#map {
+				background: purple;
+				position: absolute;
+				margin-top: 100px;
+				width: 850px;
+				height: 750px;
+			}
+
+		</style>
+	</head>
+	<body>
+		
+		<div id="container">
+		
+			<div id="menu">
+				<p>buttons</p>
+			</div>		
+		
+			<div id="main">
+			
+				<div id="years">
+					<p>years</p>
+				</div>
+				
+				<div id="map">
+					<p>map</p>
+				</div>
+				
+			</div>
+			
+		</div>
+	
+	</body>
+	
+</html>

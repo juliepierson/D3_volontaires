@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<style type="text/css">
+		 
+		    .pays {
+		        cursor: pointer;
+		    }
+		 
+		    .pays:hover {
+		        stroke: white;
+		        stroke-width: 1px;
+		    }
+		</style>
+	</head>
+	
+	<body>
+		<div id="map"></div>
+		<script type="text/javascript" src="http://d3js.org/d3.v3.min.js"></script>
+		<script type="text/javascript">
+			(function() {
+			 
+				var chemin = 'data/FV_Europe_2012.json'; /* emplacement du fichier de pays */
+				var width = 1000; /* largeur de l'image affichée */
+				var height = 1000;	/* longueur de l'image affichée */
+				var fill = '#E0E0E0'; /* couleur de remplissage */
+				var stroke = 'white';	/* couleur de bordure */
+				var stroke_width = 0.8;	/* largeur de bordure */
+			 
+				/*
+				* On crée un nouvel objet path qui permet
+				* de manipuler les données géographiques.
+				*/
+				var path = d3.geo.path();
+ 
+				/* On définit les propriétés de la projection à utiliser */
+				var projection = d3.geo.conicConformal() /* Lambert-93 */
+					.center([2.454071, 47.279229]) /* On centre la carte sur la France */
+					.scale(1000)
+					.translate([width / 2, height / 2]);
+       
+				/* On assigne la projection au path */
+				path.projection(projection);
+ 
+				/*
+				* On crée un nouvel élément svg à la racine de notre div #map,
+				* définie plus haut dans le HTML
+				*/
+				var svg = d3.select('#map').append("svg")
+					.attr("width", width)
+					.attr("height", height);
+ 
+				/*
+				* On crée un groupe SVG qui va accueillir
+				* tous nos pays
+				*/
+				var pays_svg = svg
+					.append("g")	/* utilisé pour grouper les formes, pour pouvoir ensuite les manipuler ensemble */
+					.attr("id", "pays");
+ 
+				/*
+				* On charge les données GeoJSON
+				*/
+				d3.json(chemin, function(geojson) {
+				
+
+
+ 
+					/*
+					* On "bind" un élément SVG path pour chaque entrée
+					* du tableau features de notre objet geojson
+					*/
+					var features = pays_svg
+						.selectAll("path")
+						.data(geojson.features);
+             
+
+					/*
+					* Pour chaque entrée du tableau feature, on
+					* crée un élément SVG path, avec les
+					* propriétés suivantes
+					*/
+					features.enter()
+						.append("path")
+						.attr("d", path)
+						.style('fill', fill)
+						.style('opacity', 0.8)
+						.style('stroke', stroke)
+						.style('stroke-width', stroke_width);
+						
+					features.enter()
+						.append("circle")
+						.attr("d", path)
+						.attr("r", function(d){
+							var nbvol = d.properties.nb_tot_12
+							var rayon = 5*Math.sqrt(nbvol/Math.PI);
+							return rayon;
+							})
+						.attr("cx", function(d){
+							var centroid = path.centroid(d),
+								x = centroid[0];
+								return x;
+							})
+						.attr("cy", function(d){
+							var centroid = path.centroid(d),
+								y = centroid[1];
+								return y;
+							})
+						.style('fill', 'blue')
+						.style('opacity', 0.4)
+						.style('stroke', stroke)
+						.style('stroke-width', stroke_width);
+						
+				});
+  
+
+				
+			}());
+			
+		</script>
+	</body>
+</html>

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<style type="text/css">
+		 
+		   div.tooltip {   
+				position: absolute;
+				text-align: center;
+				padding: 5px;
+				font: 12px sans-serif;
+				background: orange;
+				border: 0px;
+				border-radius: 8px;
+				pointer-events: none;
+			}
+			
+		</style>
+	</head>
+	
+	<body>
+		<div id="map"></div>
+		<script type="text/javascript" src="http://d3js.org/d3.v3.min.js"></script>
+		<script type="text/javascript">
+			(function() {
+			
+				var div = d3.select("body").append("div")   
+					.attr("class", "tooltip")               
+					.style("opacity", 0);
+			 
+				var chemin = 'data/FV_Europe_2012.json'; /* emplacement du fichier de pays */
+				var width = 1000; /* largeur de l'image affichée */
+				var height = 1000;	/* longueur de l'image affichée */
+				var fill = '#E0E0E0'; /* couleur de remplissage des pays */
+				var stroke = 'white';	/* couleur de bordure des pays */
+				var stroke_width = 0.8;	/* largeur de bordure des pays */
+			 
+				/*
+				* On crée un nouvel objet path qui permet
+				* de manipuler les données géographiques.
+				*/
+				var path = d3.geo.path();
+ 
+				/* On définit les propriétés de la projection à utiliser */
+				var projection = d3.geo.conicConformal() /* Lambert-93 */
+					.center([2.454071, 47.279229]) /* On centre la carte sur la France */
+					.scale(1000)
+					.translate([width / 2, height / 2]);
+       
+				/* On assigne la projection au path */
+				path.projection(projection);
+ 
+				/*
+				* On crée un nouvel élément svg à la racine de notre div #map,
+				* définie plus haut dans le HTML
+				*/
+				var svg = d3.select('#map').append("svg")
+					.attr("width", width)
+					.attr("height", height);
+ 
+				/*
+				* On crée un groupe SVG qui va accueillir
+				* tous nos pays
+				*/
+				var pays_svg = svg
+					.append("g")	/* utilisé pour grouper les formes, pour pouvoir ensuite les manipuler ensemble */
+
+				/*
+				* On charge les données GeoJSON
+				*/
+				d3.json(chemin, function(geojson) {
+
+					/*
+					* On "bind" un élément SVG path pour chaque entrée
+					* du tableau features de notre objet geojson
+					*/
+					var features = pays_svg
+						.selectAll("path")
+						.data(geojson.features);
+
+					/*
+					* Pour chaque entrée du tableau feature, on
+					* crée un élément SVG path, avec les
+					* propriétés suivantes
+					*/
+					features.enter()
+						.append("path")
+						.attr("d", path)
+						.style('fill', fill)
+						.style('opacity', 0.8)
+						.style('stroke', stroke)
+						.style('stroke-width', stroke_width);
+						
+					features.enter()
+						.append("circle")
+						.attr("d", path)
+						.attr("r", function(d){
+							var nbvol = d.properties.nb_tot_12
+							var rayon = 5*Math.sqrt(nbvol/Math.PI);
+							return rayon;
+							})
+						.attr("cx", function(d){
+							var centroid = path.centroid(d),
+								x = centroid[0];
+								return x;
+							})
+						.attr("cy", function(d){
+							var centroid = path.centroid(d),
+								y = centroid[1];
+								return y;
+							})
+						.on("mouseover", function(d) {	/* quand on passe la souris sur un cercle */
+							d3.select(this).style("fill", "orange");
+							div.transition()	/* transition : en 200ms, l'opacité passe de 0 (valeur initiale) à 0.9 */
+								.duration(200)
+								.style("opacity", .8);
+							div .html(d.properties.admin + '<br>' + d.properties.nb_tot_12)
+								.style("left", ((d3.select(this).attr("cx")) * 1 + (d3.select(this).attr("r")) * 1 + 15) + "px")
+								.style("top", ((d3.select(this).attr("cy")) * 1 - 15) + "px");  
+						})
+						.on("mouseout", function(d) {
+							d3.select(this).style("fill", "blue");
+							div.transition()
+								.duration(500)
+								.style("opacity", 0);
+						})
+						.style('fill', 'blue')
+						.style('opacity', 0.5)
+						.style('stroke', stroke)
+						.style('stroke-width', stroke_width);
+
+				});
+  
+
+			}());
+			
+		</script>
+	</body>
+</html>

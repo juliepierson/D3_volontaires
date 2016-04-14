@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>D3: tests</title>
+		<script type="text/javascript" src="d3/d3.v3.js"></script>
+		<script src="http://d3js.org/d3.geo.projection.v0.min.js" charset="utf-8"></script>
+		<style type="text/css">
+			/* style de base des pays */
+			path {
+				stroke: white;
+				stroke-width: 0.8;
+				fill: #eee;
+			}
+			/* style des cercles proportionnels */
+			circle {
+				fill: blue;
+				opacity: 0.5;
+				stroke: blue;
+				stroke-width: 1;
+			}
+			/* style des cercles proportionnels évidés */
+			circle.gros {
+				fill: none;
+				opacity: 0.5;
+				stroke: blue;
+				stroke-width: 2.5;
+			}
+			/* style des ronds pour les années */
+			circle.year {
+				fill: white;
+				opacity: 1;
+				stroke: darkgray;
+				stroke-width: 4;
+			}
+			/* style du rond pour l'année sélectionnée */
+			circle.yearselect {
+				fill: lightsalmon;
+				opacity: 1;
+				stroke: darkgray;
+				stroke-width: 4;
+			}
+
+		</style>
+	</head>
+	<body>
+	
+		<script type="text/javascript">
+		
+			<!-- variables à adapter -->
+			var path_json = "data/pays_modifies_NE110m_isoa2.json"; // chemin du fond de carte JSON rapport au fichier html
+			var path_csv = "data/test.csv"; // chemin des données CSV par rapport au fichier html 
+			var colonne_code = "iso_a2"; // nom de la colonne contenant le code permettant de joindre le fond de carte JSON et les données CSV (ex. : "iso_a2" pour le code ISO 2)
+			var annees = [2011, 2012, 2013];	// liste des années pour lesquelles il y a des données 
+			var racine_champ = "TOT_";	// nom de la colonne avec nb volontaires, sans l'année ("TOT_" si la colonne s'appelle "TOT_2011" pour 2011, "TOT_2012" pour 2012 etc.) 
+			var couleur_data = "#ccc";	// couleur des pays avec volontaires 
+			var evide = 100;	// nb de volontaires à partir duquel le cercle est évidé 
+			var duree_transition = 1000;	// durée de la transition en millisecondes quand on change de données à afficher 
+			
+			
+			<!-- Width and height for the map -->
+			var wm = 1000;
+			var hm = 800;
+			<!-- Width and height for the years -->
+			var wy = 1000;
+			var hy = 50;
+			<!-- padding pour que les ronds des années ne dépassent pas -->
+			var padding = 20;
+			
+			<!-- élément svg pour les années -->
+			var svg_y = d3.select("body")
+						.append("svg")
+						.attr("width", wy)
+						.attr("height", hy);
+			<!-- élément svg pour la carte -->
+			var svg_m = d3.select("body")
+						.append("svg")
+						.attr("width", wm)
+						.attr("height", hm);
+						
+			<!-- la projection dans laquelle afficher les données : Robinson -->
+			var projection = d3.geo.robinson()
+					.scale(150);
+			<!-- On crée un nouvel objet path qui traduit le GeoJSON en SVG -->
+			var path = d3.geo.path()
+				.projection(projection);
+			
+			<!-- crée une échelle pour la représentation des années -->
+			var xScale = d3.scale.linear()
+								<!-- input domain : entre min et max des années -->
+								.domain([d3.min(annees, function(d) { return d; }), d3.max(annees, function(d) { return d; })])
+								<!-- output range : entre 0 et largeur de l'élément, + padding -->
+								.range([0 + padding, wy - padding]);
+			
+			<!-- affiche une ligne pour les années -->
+			var ligne = svg_y.append("rect")
+				.attr("x", 0)
+				.attr("y", 8)
+				.attr("width", 1000)
+				.attr("height", 4)
+				.attr("fill", "darkgray")
+				
+			<!-- affiche les années sous forme de ronds -->
+			svg_y.selectAll("circle")
+				.data(annees)
+				.enter()
+				.append("circle")
+				.attr("class", function(d){
+							if (d <= annees[0]) {
+								return "yearselect";
+							} else {
+								return "year";
+							}
+						})
+				.attr("cx", function(d) { return xScale(d); })
+			    .attr("cy", 10)
+			    .attr("r", 8)
+			   
+			  	<!-- si on clique sur une année, actualise les données en fonction de l'année -->
+			   .on("click", function(d) {
+			   		<!-- réinitialise le style de tous les cercles -->
+			   		svg_y.selectAll("circle")
+			   		.attr("class", "year");
+			   		<!-- change le style du cercle cliqué -->
+			   		d3.select(this)
+			   			.attr("class", "yearselect");
+			   		<!-- stocke l'année du cercle cliqué -->
+					var encours = d;
+					
+					<!-- update all circles -->
+					svg_m.selectAll("circle")	
+						.transition()
+						.duration(duree_transition)
+						.attr("r", function(d){
+							var nbvol = d.properties[racine_champ + encours];
+							var rayon = 3 * Math.sqrt(nbvol/Math.PI);
+							return rayon;
+						})
+						<!-- si la valeur est suffisamment importante, vide le cercle pour qu'on ne voit que le contour -->
+						.attr("class", function(d) {
+							var value = d.properties[racine_champ + encours]; 
+							if (value > evide) {
+								return "gros";
+							} 
+						});
+						
+					<!-- update all countries -->
+					svg_m.selectAll("path")
+						.transition()
+						.duration(duree_transition)
+						.attr("d", path)
+						.style("fill", function(d) {
+							var value = d.properties[racine_champ + encours]; 
+							if (value) {
+								return couleur_data;
+							} 
+						});
+				});
+
+			<!-- affiche les étiquettes des années -->
+			svg_y.selectAll("text")
+			   .data(annees)
+			   .enter()
+			   .append("text")
+			   .text(function(d) { return (d); })
+			   .attr("x", function(d) { return xScale(d) - padding; })
+			   .attr("y", 35)
+			   .attr("font-family", "sans-serif")
+			   .attr("font-size", "13px")
+			   .attr("font-weight", "bold")
+			   .attr("fill", "grey");
+			   
+			   
+			<!-- Chargement des données CSV -->
+				d3.csv(path_csv, function (data) {
+					
+					<!-- Load in GeoJSON data --> 
+					d3.json(path_json, function(json) {
+					
+						<!-- For every year -->
+						for (var a = 0; a < annees.length; a++) {
+					
+							<!-- initializes all data to 0 in geojson -->
+							for (var j = 0; j < json.features.length; j++) {
+								json.features[j].properties[racine_champ + annees[a]] = 0;
+							}
+	
+							<!-- Merge the ag. data and GeoJSON --> 
+							<!-- Loop through once for each ag. data value -->
+							for (var i = 0; i < data.length; i++) {
+						
+								<!-- Grab state name --> 
+								var dataState = data[i][colonne_code];
+								
+								<!-- Grab data value, and convert from string to float -->
+								var dataValue = parseFloat(data[i][racine_champ + annees[a]]);
+						
+								<!-- Find the corresponding state inside the GeoJSON -->
+								for (var j = 0; j < json.features.length; j++) {
+								
+									var jsonState = json.features[j].properties[colonne_code];
+						
+									if (dataState == jsonState) {
+								
+										<!-- Copy the data value into the JSON -->
+										json.features[j].properties[racine_champ + annees[a]] = dataValue;
+										
+										<!-- Stop looking through the JSON -->
+										break;
+										
+									}
+								}
+							}
+						}
+
+					<!-- Bind data and create one path per GeoJSON feature -->
+					<!-- affiche les pays, couleur si valeur non nulle -->
+					svg_m.selectAll("path")
+					   .data(json.features)
+					   .enter()
+					   .append("path")
+					   .attr("d", path)
+					   .style("fill", function(d) {
+					   		<!-- Get data value -->
+					   		var value = d.properties[racine_champ + annees[0]];
+					   		
+					   		if (value) {
+					   			<!-- If value exists… -->
+						   		return couleur_data;
+					   		} 
+					   });
+					   
+					<!-- affiche les cercles proportionnels -->
+					svg_m.selectAll("circle")
+						.data(json.features)
+						.enter()
+						.append("circle")
+						
+						.attr("cx", function(d){
+								var centroid = path.centroid(d),
+									x = centroid[0];
+									return x;
+						})
+						.attr("cy", function(d){
+								var centroid = path.centroid(d),
+									y = centroid[1];
+									return y;
+						})
+						<!-- calcule le rayon du cercle pour que la surface varie avec la valeur -->
+						.attr("r", function(d){
+								var nbvol = d.properties[racine_champ + annees[0]]
+								var rayon = 3 * Math.sqrt(nbvol/Math.PI);
+								return rayon;
+						})
+						<!-- si la valeur est suffisamment importante, vide le cercle pour qu'on ne voit que le contour -->
+						.attr("class", function(d) {
+							var value = d.properties[racine_champ + annees[0]]; 
+							if (value > evide) {
+								return "gros";
+							} 
+						})
+						/* trie les cercles en fonction du nb de vol pour mettre les + petits devant */
+						.sort(function(a,b) {return b.properties[racine_champ + annees[0]]*1-a.properties[racine_champ + annees[0]]*1;});
+					
+				
+				});
+			});
+
+
+
+		</script>
+	</body>
+</html>

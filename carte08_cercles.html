@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>D3: tests</title>
+		<script type="text/javascript" src="d3/d3.v3.js"></script>
+		<script src="http://d3js.org/d3.geo.projection.v0.min.js" charset="utf-8"></script>
+		<link href='http://fonts.googleapis.com/css?family=Open+Sans:400,400italic,600,600italic,700,700italic&amp;subset=latin,latin-ext' rel='stylesheet' type='text/css'>
+		<link rel="stylesheet" type="text/css" href="carte_cercles.css">
+	</head>
+	<body>
+	
+		<div id="container">
+		
+			<div id="chapeau">
+				<h1>Titre...</h1>
+				<p>Blablabla blablabla blablabla.</p>
+			</div>
+		
+			<div id="menu">
+				<div id="menuleft">
+					<p>Type de carte :</p>
+					<p>Dispositif de volontariat :</p>
+				</div>
+				<div id="menuright">
+					<form name="fmaptype">
+						<ul>
+							<li>
+								<input type="radio" id="cp" name="radiomaptype" value="cp" Checked>
+								<label for="cp">Cercles proportionnels</label>
+								<input type="radio" id="ana" name="radiomaptype" value="ana">
+								<label for="ana">Anamorphose</label>
+							</li>
+							<li>
+								<input type="radio" id="tous" name="radiovoltype" value="Tous" Checked>
+								<label for="tous">Tous</label>
+								<input type="radio" id="sci" name="radiovoltype" value="SCI">
+								<label for="sci">SCI</label>
+								<input type="radio" id="sve" name="radiovoltype" value="SVE">
+								<label for="sve">SVE</label>
+								<input type="radio" id="vp" name="radiovoltype" value="VP">
+								<label for="vp">VP</label>
+								<input type="radio" id="vsi" name="radiovoltype" value="VSI">
+								<label for="vsi">VSI</label>
+							</li>
+						</ul>
+					</form>
+				</div>
+			</div>		
+		
+			<div id="main">
+			
+				<div id="desc">
+					<div id="type">
+						<h2>Légende et explications</h2>
+						<p class="desc_cp">Ceci est une carte en cercles proportionnels.</p>
+						<p class="desc_ana" style="display:none">Ceci est une carte en anamorphose.</p>
+					</div>
+					<div id="dispo">
+						<h2>Dispositif de volontariat</h2>
+						<p class="dispo_tous">Tous les dispositifs de volontariat sont représentés.</p>
+						<p class="dispo_sci" style="display:none">SCI</p>
+						<p class="dispo_sve" style="display:none">SVE</p>
+						<p class="dispo_vp" style="display:none">VP</p>
+						<p class="dispo_vsi" style="display:none">VSI</p>
+					</div>
+				</div>
+			
+				<div id="years">
+				</div>
+				
+				<div id="map">
+				</div>
+				
+			</div>
+			
+		</div>
+	
+	
+		<script type="text/javascript">
+		
+			<!---------------------------------------------------------------->
+			<!--------------------- Variables du script ---------------------->
+			<!---------------------------------------------------------------->
+		
+			<!-- variables à adapter -->
+			var path_json = "data/pays_modifies_NE110m_isoa2.json"; // chemin du fond de carte JSON rapport au fichier html 
+			var path_csv = "data/2011imaginr_2012tout_2013.csv"; // chemin des données CSV par rapport au fichier html
+			var path_ana = "data/anamorphose_"; //chemin des anamorphoses, sans l'année ("data/anamorphose_" si les anam. sont "data/anamorphose_2011" et "data/anamorphose_2012" par exemple)
+			var colonne_code = "iso_a2"; // nom de la colonne contenant le code permettant de joindre le fond de carte JSON et les données CSV (ex. : "iso_a2" pour le code ISO 2) 
+			var annees = [2011, 2012, 2013];	// liste des années pour lesquelles il y a des données 
+			var racine_tot = "TOT_";	// nom de la colonne avec nb volontaires totaux, sans l'année ("TOT_" si la colonne s'appelle "TOT_2011" pour 2011, "TOT_2012" pour 2012 etc.) 
+			var racine_sci = "SCI_";	// nom de la colonne avec nb volontaires SCI, sans l'année ("TOT_" si la colonne s'appelle "TOT_2011" pour 2011, "TOT_2012" pour 2012 etc.)  
+			var racine_sve = "SVE_";	// nom de la colonne avec nb volontaires SVE, sans l'année ("TOT_" si la colonne s'appelle "TOT_2011" pour 2011, "TOT_2012" pour 2012 etc.) 
+			var racine_vp = "VP_";	// nom de la colonne avec nb volontaires VP, sans l'année ("TOT_" si la colonne s'appelle "TOT_2011" pour 2011, "TOT_2012" pour 2012 etc.) 
+			var racine_vsi = "VSI_";	// nom de la colonne avec nb volontaires VSI, sans l'année ("TOT_" si la colonne s'appelle "TOT_2011" pour 2011, "TOT_2012" pour 2012 etc.) 
+			var couleur_data = "#ccc";	// couleur des pays avec volontaires
+			var couleur_ana = "#eee";	// couleur des pays pour l'anamorphose
+			var evide = 100;	// nb de volontaires à partir duquel le cercle est évidé
+			var duree_transition = 1000;	// durée de la transition en millisecondes quand on change de données à afficher
+			var legende_cp = [12, 98, 250, 421]; // liste des valeurs à afficher dans la légende de la carte en cercles proportionnels
+			
+			
+			<!-- Width and height for the map -->
+			var wm = 960;
+			var hm = 500;
+			<!-- Width and height for the years -->
+			var wy = 100;
+			var hy = 500;
+			<!-- Width and height for the menu -->
+			var wme = 1300;
+			var hme = 100;
+			<!-- Width and height for the legend-->
+			var wl = 1300;
+			var hl = 100;
+			<!-- padding pour que les ronds des années ne dépassent pas -->
+			var padding = 20;
+			
+			<!-- élément svg pour les boutons -->
+			var svg_menu = d3.select("#menu")
+						.append("svg")
+						.style("fill", "pink")
+						.attr("width", wme)
+						.attr("height", hme);
+			<!-- élément svg pour les années -->
+			var svg_y = d3.select("#years")
+						.append("svg")
+						.attr("width", wy)
+						.attr("height", hy);
+			<!-- élément svg pour la carte -->
+			var svg_map = d3.select("#map")
+						.append("svg")
+						.attr("width", wm)
+						.attr("height", hm);
+			<!-- sous groupe pour les éléments de la carte (pays, cercles...) -->
+			var cartogroupe = svg_map.append("g");
+			<!-- sous groupe pour le planisphère (ces sous-groupes permettent que le planisphère soit toujours affiché en dernier, sinon à chaque mise à jour il repasse dessous) -->
+			var planigroupe = svg_map.append("g");
+			<!-- élément svg pour la légende -->
+			var svg_leg = d3.select("#type")
+						.append("svg")
+						.attr("width", wl)
+						.attr("height", hl);
+			<!-- groupe pour la légende cp -->
+			var leg_cp_groupe = svg_leg.append("g")
+						.attr("class", "leg_cp");
+						
+			<!-- la projection dans laquelle afficher les données : Robinson -->
+			var projection = d3.geo.robinson()
+					.scale(150);
+			<!-- On crée un nouvel objet path qui traduit le GeoJSON en SVG -->
+			var path = d3.geo.path()
+				.projection(projection);
+				
+			var graticule = d3.geo.graticule();
+			
+			<!-- crée une échelle pour la représentation des années -->
+			var yScale = d3.scale.linear()
+								<!-- input domain : entre min et max des années -->
+								.domain([d3.max(annees, function(d) { return d; }), d3.min(annees, function(d) { return d; })])
+								<!-- output range : entre 0 et hauteur de l'élément, + padding -->
+								.range([0 + 2*padding, hy - 2*padding]);
+			
+			
+			<!---------------------------------------------------------------->
+			<!-------------------------- Fonctions --------------------------->
+			<!---------------------------------------------------------------->
+			
+			<!-- pour savoir quel type de carte (cercles proportionnels ou anamorphose) est sélectionné -->
+			var getmaptype = function () {
+				//var maptype = document.forms["fmaptype"].elements["radiomaptype"].value; 
+				var cp_checked = document.getElementById("cp").checked;
+				if (cp_checked == true) {
+					return "cp";
+				} else {
+					return "ana";
+				}
+			}
+			
+			<!-- pour savoir quel type dedispositif de volontariat est sélectionné -->
+			var getdispo = function () {
+				var dispo = document.getElementById("tous").checked;
+				if (dispo == true) { return racine_tot; }
+				var dispo = document.getElementById("sci").checked;
+				if (dispo == true) { return racine_sci; }
+				var dispo = document.getElementById("sve").checked;
+				if (dispo == true) { return racine_sve; }
+				var dispo = document.getElementById("vp").checked;
+				if (dispo == true) { return racine_vp; }
+				var dispo = document.getElementById("vsi").checked;
+				if (dispo == true) { return racine_vsi; }
+			}
+			
+			<!-- pour savoir quelle année est sélectionné -->
+			var getyear = function () {
+				var year = d3.select(".yearselect").text();
+				return year;
+			}
+			
+			<!-- calcul du rayon des cercles proportionnels en fonction des valeurs -->
+			var calc_rayon = function (d) {
+				var rayon = 3 * Math.sqrt(d/Math.PI);
+				return rayon;
+			}
+			
+			<!-- Dessin des cercles proportionnels -->
+			var dessin_cercles = function (json, annee, racine) {
+				cartogroupe.selectAll("circle")
+					.data(json.features)
+					.enter()
+					.append("circle")
+					
+					.attr("cx", function(d){
+							var centroid = path.centroid(d),
+								x = centroid[0];
+								return x;
+					})
+					.attr("cy", function(d){
+							var centroid = path.centroid(d),
+								y = centroid[1];
+								return y;
+					})
+					<!-- calcule le rayon du cercle pour que la surface varie avec la valeur -->
+					.attr("r", function(d){
+							var nbvol = d.properties[racine + annee];
+							return calc_rayon(nbvol);
+					})
+					<!-- si la valeur est suffisamment importante, vide le cercle pour qu'on ne voit que le contour -->
+					.attr("class", function(d) {
+						var value = d.properties[racine + annee]; 
+						if (value > evide) {
+							return "gros";
+						} 
+					})
+					/* trie les cercles en fonction du nb de vol pour mettre les + petits devant */
+					.sort(function(a,b) {return b.properties[racine + annee]*1-a.properties[racine + annee]*1;}); 
+			}
+			
+			<!-- mise à jour des cercles proportionnels -->
+			var maj_cercles = function (annee, racine) {
+				cartogroupe.selectAll("circle")
+						.transition()
+						.duration(duree_transition)
+						.attr("r", function(d){
+							var nbvol = d.properties[racine + annee];
+							console.log("nbvol : " + d.properties[racine + annee])
+							return calc_rayon(nbvol);
+						})
+						<!-- si la valeur est suffisamment importante, vide le cercle pour qu'on ne voit que le contour -->
+						.attr("class", function(d) {
+							var value = d.properties[racine + annee]; 
+							if (value > evide) {
+								return "gros";
+							}
+						});
+			}
+			
+			<!-- mise à jour des cercles proportionnels -->
+			var maj_cercles_recharge = function (json, annee, racine) {
+				cartogroupe.selectAll("circle")
+						.data(json.features)
+						.transition()
+						.duration(duree_transition)
+						.attr("r", function(d){
+							var nbvol = d.properties[racine + annee];
+							return calc_rayon(nbvol);
+						})
+						<!-- si la valeur est suffisamment importante, vide le cercle pour qu'on ne voit que le contour -->
+						.attr("class", function(d) {
+							var value = d.properties[racine + annee]; 
+							if (value > evide) {
+								return "gros";
+							}
+						});
+			}
+			
+			<!-- pour lier les données CSV au json -->
+			var bind_csv_json = function (data, json, racine) {
+				<!-- For every year -->
+				for (var a = 0; a < annees.length; a++) {
+			
+					<!-- initializes all data to 0 in geojson -->
+					for (var j = 0; j < json.features.length; j++) {
+						json.features[j].properties[racine + annees[a]] = 0;
+					}
+
+					<!-- Merge the ag. data and GeoJSON --> 
+					<!-- Loop through once for each ag. data value -->
+					for (var i = 0; i < data.length; i++) {
+				
+						<!-- Grab state name --> 
+						var dataState = data[i][colonne_code];
+						
+						<!-- Grab data value, and convert from string to float -->
+						var dataValue = parseFloat(data[i][racine + annees[a]]);
+				
+						<!-- Find the corresponding state inside the GeoJSON -->
+						for (var j = 0; j < json.features.length; j++) {
+						
+							var jsonState = json.features[j].properties[colonne_code];
+				
+							if (dataState == jsonState) {
+						
+								<!-- Copy the data value into the JSON -->
+								json.features[j].properties[racine + annees[a]] = dataValue;
+								
+								<!-- Stop looking through the JSON -->
+								break;
+								
+							}
+						}
+					}
+				}
+			}
+			
+			<!-- Mise à jour des pays quand on ne change pas de fichier de données (CP vers CP) -->
+			var maj_pays_meme_fichier = function (annee, racine) {
+				cartogroupe.selectAll("path")
+						.transition()
+						.duration(duree_transition)
+						.attr("d", path)
+						.style("fill", function(d) {
+							var value = d.properties[racine + annee]; 
+							if (value) {
+								return couleur_data;
+							} 
+						});
+			}
+			
+			<!-- Mise à jour des pays quand on change de fichier de données (ANA vers CP, CP vers ANA, ou ANA vers ANA) -->
+			var maj_pays_autre_fichier = function (json, annee, racine) {
+				cartogroupe.selectAll("path")
+						.data(json.features) // la ligne en plus par rapport à la fonction maj_pays_meme_fichier !
+						.attr("d", path)
+						.style("fill", function(d) {
+							<!-- si carte CP, colorie différemment les pays avec et sans valeur -->
+							if (getmaptype() == "cp") {
+								var value = d.properties[racine + annee];
+								console.log(value);
+								if (value > 0) {
+									return couleur_data;
+								}
+							<!-- si carte ana, colorie tous les pays avec la couleur anamorphose -->
+							} else {
+								return couleur_ana;
+							}
+						});
+			}
+			
+			<!-- Dessin des pays pour la carte en cercles proportionnels -->
+			var dessin_pays_cp = function (json, racine) {
+				cartogroupe.selectAll("path")
+				   .data(json.features)
+				   .enter()
+				   .append("path")
+				   .attr("d", path)
+				   .style("fill", function(d) {
+				   		<!-- Get data value -->
+				   		var value = d.properties[racine + annees[0]];
+				   		if (value) {
+				   			<!-- If value exists… -->
+					   		return couleur_data;
+				   		} 
+				   });
+			}
+			
+			<!-- Affiche ou masque les éléments d'une même classe -->
+			var show_hide_class = function(nom_classe, nom_display) { 
+				var liste_elements = document.getElementsByClassName(nom_classe), i;
+					for (var i = 0; i < liste_elements.length; i++) {
+						liste_elements[i].style.display=nom_display;
+					}
+				}
+				
+			<!-- Affiche les éléments d'une classe, masque les éléments d'une liste de classe -->
+			var show_hide_multiple = function (montre, cache) {
+				for (var i =0; i < cache.length; i++) {
+					show_hide_class(cache[i], "none");
+				}
+				for (var i =0; i < montre.length; i++) {
+					show_hide_class(montre[i], "block");
+				}
+			}
+			
+			
+			<!---------------------------------------------------------------->
+			<!--------------- Le début du code proprement dit ---------------->
+			<!---------------------------------------------------------------->
+			
+			<!-- affiche le planisphère -->
+			var planisphere = planigroupe.append("path")
+				.datum({type: "Sphere"})
+				.attr("class", "plani")
+				.attr("id", "sphere")
+				.attr("d", path);
+
+
+			<!-- Pour afficher la carte initiale : première année, cercles proportionnels -->
+			<!-- Chargement des données CSV -->
+			d3.csv(path_csv, function (data) {
+				
+				<!-- Chargement des données JSON --> 
+				d3.json(path_json, function(json) {
+				
+					<!-- Lie les données du CSV (data) au JSON -->
+					bind_csv_json(data, json, racine_tot)
+
+					<!-- affiche les pays, couleur si valeur non nulle -->
+					dessin_pays_cp(json, racine_tot)
+					   
+					<!-- affiche les cercles proportionnels pour la première année -->
+					dessin_cercles(json, annees[0], racine_tot)
+				
+				});
+			});
+			
+			<!-- Ajout des cercles de la légende -->
+			leg_cp_groupe.selectAll("circle")
+				.data(legende_cp)
+				.enter()
+				.append("circle")
+				<!-- évide le cercle si sa valeur est supérieure à celle définie par l'utilisateur -->
+				.attr("class", function(d) {
+							if (d > evide) {
+								return "gros";
+							} 
+						})
+				.attr("cx", 40)
+				.attr("cy", function (d) { return 100 - calc_rayon(d); })
+				.attr("r", function(d) { return calc_rayon(d); });
+			
+			<!-- Ajout des lignes de la légende -->
+			leg_cp_groupe.selectAll("line")
+				.data(legende_cp)
+				.enter()
+				.append("line")
+				.attr("class", "legende")
+				.attr("x1", 40)
+				.attr("y1", function (d) { return 100 - 2*calc_rayon(d); })
+				.attr("x2", 90)
+				.attr("y2", function (d) { return 100 - 2*calc_rayon(d); });
+							
+			<!-- affiche les étiquettes de la légende -->
+			leg_cp_groupe.selectAll("text")
+			   .data(legende_cp)
+			   .enter()
+			   .append("text")
+			   .attr("class", "legende")
+			   .text(function(d) { return (d); })
+			   .attr("x", 95)
+			   .attr("y", function (d) { return 100 - 2*calc_rayon(d); });
+			
+			<!-- affiche une ligne (rectangle) pour les années -->
+			var ligne = svg_y.append("rect")
+				.attr("x", 30)
+				.attr("y", 4)
+				.attr("width", 4)
+				.attr("height", 650)
+				.attr("fill", "darkgray")
+			<!-- affiche un triangle tout en haut de la ligne pour en faire une flèche -->
+			svg_y.append('path')
+				.attr("class", "triangle")
+				.attr('d', function(d) { 
+					var x = 32, y = 4;
+					return 'M ' + x +' '+ y + ' l 5 10 l -10 0 z';
+				 });
+				 
+			<!-- affiche les étiquettes des années -->
+			svg_y.selectAll("text")
+			   .data(annees)
+			   .enter()
+			   .append("text")
+			   .text(function(d) { return (d); })
+			   .attr("x", 47)
+			   .attr("y", function(d) { return yScale(d) ; })
+			   .attr("font-weight", "bold")
+			   .attr("fill", "grey");
+			
+			<!-- affiche les années sous forme de ronds -->
+			svg_y.selectAll("circle")
+				.data(annees)
+				.enter()
+				.append("circle")
+				.attr("class", function(d){
+							if (d <= annees[0]) {
+								return "yearselect";
+							} else {
+								return "year";
+							}
+						})
+				.attr("cx", 32)
+			    .attr("cy", function(d) { return yScale(d); })
+			    .attr("r", 8)
+			    .text(function(d) { return (d); }) // attribue comme texte l'année, pour facilement la récupérer 
+			   
+			  	<!-- si on clique sur une année, actualise les données en fonction de l'année -->
+			   .on("click", function(d) {
+			   
+			   		<!-- réinitialise le style de tous les cercles -->
+				   	svg_y.selectAll("circle")
+				   		.attr("class", "year");
+				   		
+				   	<!-- change le style du cercle cliqué -->
+				   	d3.select(this)
+				   		.attr("class", "yearselect");
+				   		
+				   	<!-- stocke l'année du cercle cliqué -->
+					var encours = d;
+					
+			   		<!-- récupère le type de carte sélectionné -->
+			   		maptype = getmaptype();
+			   		
+			   		<!-- si cercles proportionnels est sélectionné -->
+			   		if (maptype == "cp") {
+			   			console.log(getdispo());
+						<!-- met à jour les cercles pour l'année et le dispo en cours -->
+						maj_cercles(encours, getdispo());
+						<!-- met à jour les pays pour l'année et le dispo en cours -->
+						maj_pays_meme_fichier(encours, getdispo());
+						
+					<!-- si anamorphose est sélectionné -->
+					} else {
+						<!-- charge les données anamorphose pour l'année en cours -->
+						d3.json(path_ana + encours + ".json", function(json) {
+							<!-- met à jour les pays -->
+							maj_pays_autre_fichier(json, encours, getdispo())
+						});
+						<!-- supprime les cercles proportionnels (normalement inutile, mais utile si page mal rechargée) -->
+						var circle = cartogroupe.selectAll("circle")
+							.data([])
+						circle.exit().remove()
+					}
+					
+				});
+
+			<!-- Quand on clique sur le bouton CP -->
+			d3.select("#cp")
+				.on("click", function() {
+				
+					<!-- récupère l'année en cours -->
+					encours = getyear();
+					
+					<!-- Chargement des données CSV -->
+					d3.csv(path_csv, function (data) {
+					
+						<!-- Load in GeoJSON data --> 
+						d3.json(path_json, function(json) {
+						
+							<!-- Lie les données du CSV (data) au JSON -->
+							bind_csv_json(data, json, getdispo())
+	
+							<!-- dessine les pays (CP) -->
+							maj_pays_autre_fichier(json, encours, getdispo())
+
+							<!-- dessine les cercles pour l'année en cours et le dispo en cours -->
+							dessin_cercles(json, encours, getdispo())
+						});
+					});
+					<!-- affiche la description et légende cp, masque desc anamorphose -->
+					show_hide_multiple(["desc_cp", "leg_cp"], ["desc_ana"]);
+				});
+				
+			<!-- Quand on clique sur le bouton ANA -->
+			d3.select("#ana")
+				.on("click", function() {
+				
+					<!-- récupère l'année en cours -->
+					encours = getyear();
+					
+					<!-- Charge les données anamorphose pour l'année en cours --> 
+					d3.json(path_ana + encours + ".json", function(json) {
+					
+						<!-- dessine les pays (ANA) -->
+						maj_pays_autre_fichier(json, encours, getdispo())
+						
+						<!-- supprime les cercles proportionnels -->
+						var circle = cartogroupe.selectAll("circle")
+							.data([])
+						circle.exit().remove()
+					});
+					<!-- affiche la description anamorphose, masque desc et légende cp -->
+					show_hide_multiple(["desc_ana"], ["desc_cp", "leg_cp"]);
+				});
+			
+			
+			<!-- Quand on clique sur le bouton Tous -->
+			d3.select("#tous")
+				.on("click", function() {
+				
+					<!-- met à jour la description -->
+					show_hide_multiple(["dispo_tous"], ["dispo_sci", "dispo_sve", "dispo_vp", "dispo_vsi"]);
+					
+					<!-- récupère l'année en cours -->
+					encours = getyear();
+					
+					<!-- récupère le type de carte -->
+					maptype = getmaptype();
+					
+					<!-- Chargement des données CSV -->
+					d3.csv(path_csv, function (data) {
+					
+						<!-- Load in GeoJSON data --> 
+						d3.json(path_json, function(json) {
+						
+							<!-- Lie les données du CSV (data) au JSON -->
+							bind_csv_json(data, json, racine_tot)
+					
+							<!-- si carte CP -->
+							if (maptype == "cp") {
+								<!-- met à jour les pays pour l'année -->
+								maj_pays_autre_fichier(json, encours, racine_tot)
+								<!-- met à jour les cercles pour l'année -->
+								maj_cercles_recharge(json, encours, racine_tot)
+								
+							<!-- si carte ANA -->
+							} else {
+								<!-- affiche l'anamorphose -->
+								d3.json(path_ana + encours + ".json", function(json) {
+									maj_pays_autre_fichier(json, encours, racine_tot)
+								});
+								<!-- supprime les cercles proportionnels -->
+								var circle = cartogroupe.selectAll("circle")
+									.data([])
+								circle.exit().remove();
+							}
+					
+						});
+					
+					});
+					
+				});
+				
+			<!-- Quand on clique sur le bouton SCI -->
+			d3.select("#sci")
+				.on("click", function() {
+					<!-- met à jour la description -->
+					show_hide_multiple(["dispo_sci"], ["dispo_tous", "dispo_sve", "dispo_vp", "dispo_vsi"]);
+					
+					<!-- récupère l'année en cours -->
+					encours = getyear();
+					console.log("annee : " + encours);
+					
+					<!-- récupère le type de carte -->
+					maptype = getmaptype();
+					console.log("maptype : " + maptype);
+					
+					<!-- Chargement des données CSV -->
+					d3.csv(path_csv, function (data) {
+					
+						<!-- Load in GeoJSON data --> 
+						d3.json(path_json, function(json) {
+						
+							<!-- Lie les données du CSV (data) au JSON -->
+							bind_csv_json(data, json, racine_sci)
+					
+							<!-- si carte CP -->
+							if (maptype == "cp") {
+								<!-- met à jour les pays pour l'année -->
+								maj_pays_autre_fichier(json, encours, racine_sci)
+								<!-- met à jour les cercles pour l'année -->
+								maj_cercles_recharge(json, encours, racine_sci)
+								
+							<!-- si carte ANA -->
+							} else {
+								<!-- affiche l'anamorphose -->
+								d3.json(path_ana + encours + ".json", function(json) {
+									maj_pays_autre_fichier(json, encours, racine_sci)
+								});
+								<!-- supprime les cercles proportionnels -->
+								var circle = cartogroupe.selectAll("circle")
+									.data([])
+								circle.exit().remove();
+							}
+					
+						});
+					
+					});
+					
+				});
+				
+			<!-- Quand on clique sur le bouton SVE -->
+			d3.select("#sve")
+				.on("click", function() {
+					<!-- met à jour la description -->
+					show_hide_multiple(["dispo_sve"], ["dispo_tous", "dispo_sci", "dispo_vp", "dispo_vsi"]);
+
+					<!-- récupère l'année en cours -->
+					encours = getyear();
+					
+					<!-- récupère le type de carte -->
+					maptype = getmaptype();
+					
+					<!-- si carte CP -->
+					if (maptype == "cp") {
+						<!-- met à jour les cercles pour l'année -->
+						maj_cercles(json, encours, racine_sve);
+						<!-- met à jour les pays pour l'année -->
+						maj_pays_meme_fichier(encours, racine_sve);
+					<!-- si carte ANA -->
+					} else {
+						<!-- affiche l'anamorphose -->
+						d3.json(path_ana + encours + ".json", function(json) {
+							maj_pays_autre_fichier(json, encours, racine_sve)
+						});
+						<!-- supprime les cercles proportionnels -->
+						var circle = cartogroupe.selectAll("circle")
+							.data([])
+						circle.exit().remove();
+					}
+					
+				});
+				
+			<!-- Quand on clique sur le bouton VP -->
+			d3.select("#vp")
+				.on("click", function() {
+					<!-- met à jour la description -->
+					show_hide_multiple(["dispo_vp"], ["dispo_tous", "dispo_sve", "dispo_sci", "dispo_vsi"]);
+					<!-- récupère l'année en cours -->
+					encours = getyear();
+					
+					<!-- récupère le type de carte -->
+					maptype = getmaptype();
+					
+					<!-- si carte CP -->
+					if (maptype == "cp") {
+						<!-- met à jour les cercles pour l'année -->
+						maj_cercles(json, encours, racine_vp);
+						<!-- met à jour les pays pour l'année -->
+						maj_pays_meme_fichier(encours, racine_vp);
+					<!-- si carte ANA -->
+					} else {
+						<!-- affiche l'anamorphose -->
+						d3.json(path_ana + encours + ".json", function(json) {
+							maj_pays_autre_fichier(json, encours, racine_vp)
+						});
+						<!-- supprime les cercles proportionnels -->
+						var circle = cartogroupe.selectAll("circle")
+							.data([])
+						circle.exit().remove();
+					}
+					
+				});
+				
+			<!-- Quand on clique sur le bouton VSI -->
+			d3.select("#vsi")
+				.on("click", function() {
+					<!-- met à jour la description -->
+					show_hide_multiple(["dispo_vsi"], ["dispo_tous", "dispo_sve", "dispo_vp", "dispo_sci"]);
+					
+					<!-- récupère l'année en cours -->
+					encours = getyear();
+					
+					<!-- récupère le type de carte -->
+					maptype = getmaptype();
+					
+					<!-- si carte CP -->
+					if (maptype == "cp") {
+						<!-- met à jour les cercles pour l'année -->
+						maj_cercles(json, encours, racine_vsi);
+						<!-- met à jour les pays pour l'année -->
+						maj_pays_meme_fichier(encours, racine_vsi);
+					<!-- si carte ANA -->
+					} else {
+						<!-- affiche l'anamorphose -->
+						d3.json(path_ana + encours + ".json", function(json) {
+							maj_pays_autre_fichier(json, encours, racine_vsi)
+						});
+						<!-- supprime les cercles proportionnels -->
+						var circle = cartogroupe.selectAll("circle")
+							.data([])
+						circle.exit().remove();
+					}
+					
+				});
+
+			
+				
+				
+		</script>
+	</body>
+</html>

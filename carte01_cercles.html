@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>D3: A simple bar chart</title>
+		<script type="text/javascript" src="d3/d3.v3.js"></script>
+		<script src="http://d3js.org/d3.geo.projection.v0.min.js" charset="utf-8"></script>
+		<style type="text/css">
+			path {
+				stroke: white;
+				stroke-width: 0.8;
+				fill: #eee;
+			}
+			circle {
+				fill: blue;
+				opacity: 0.5;
+				stroke: blue;
+				stroke-width: 1;
+			}
+		</style>
+	</head>
+	<body>
+
+		<p id="p1">2011</p>
+		<p id="p2">2012</p>	
+	
+		<script type="text/javascript">
+		
+			var chemin = "data/FV_2011_2012.json";
+			var couleur_data = "#ccc";
+			var racine_champ = "NBVOL_";
+
+			var evide = 100;
+			var duree_transition = 700;
+			<!-- Width and height -->
+			var w = 1000;
+			var h = 800;
+			<!-- nouvel élément svg -->
+			var svg = d3.select("body")
+						.append("svg")
+						.attr("width", w)
+						.attr("height", h);
+			<!-- la projection dans laquelle afficher les données : Robinson -->
+			var projection = d3.geo.robinson()
+					.scale(150);
+			<!-- On crée un nouvel objet path qui traduit le GeoJSON en SVG -->
+			var path = d3.geo.path()
+				.projection(projection);
+				
+				
+			d3.json(chemin, function(json) {
+			
+			
+				svg.selectAll("path")
+					.data(json.features)
+					.enter()
+					.append("path")
+					.attr("d", path)
+					.style("fill", function(d) {
+						var value = d.properties[racine_champ + "11"]; 
+						if (value) {
+							return couleur_data;
+						} 
+					});
+					
+				svg.selectAll("circle")
+					.data(json.features)
+					.enter()
+					.append("circle")
+					.attr("cx", function(d){
+							var centroid = path.centroid(d),
+								x = centroid[0];
+								return x;
+					})
+					.attr("cy", function(d){
+							var centroid = path.centroid(d),
+								y = centroid[1];
+								return y;
+					})
+					<!-- calcule le rayon du cercle pour que la surface varie avec la valeur -->
+					.attr("r", function(d){
+							var nbvol = d.properties[racine_champ + "11"]
+							var rayon = 3 * Math.sqrt(nbvol/Math.PI);
+							return rayon;
+					})
+					<!-- si la valeur est suffisamment importante, vide le cercle pour qu'on ne voit que le contour -->
+					.style("fill", function(d) {
+						var value = d.properties[racine_champ + "11"]; 
+						if (value > evide) {
+							return "none";
+						} 
+					})
+					/* trie les cercles en fonction du nb de vol pour mettre les + petits devant */
+					.sort(function(a,b) {return b.properties[racine_champ + "11"]*1-a.properties[racine_champ + "11"]*1;});
+				
+			});
+			
+			<!-- On click, update with 2011 data -->
+			d3.select(document.getElementById("p1"))
+				.on("click", function() {
+
+					<!-- Update all circles  -->
+					svg.selectAll("circle")
+						.transition()
+						.duration(duree_transition)
+					   .attr("r", function(d){
+							var nbvol = d.properties[racine_champ + "11"]
+							var rayon = 3 * Math.sqrt(nbvol/Math.PI);
+							return rayon;
+						})
+						<!-- si la valeur est suffisamment importante, vide le cercle pour qu'on ne voit que le contour -->
+						.style("fill", function(d) {
+							var value = d.properties[racine_champ + "11"]; 
+							if (value > evide) {
+								return "none";
+							} 
+						})
+						/* trie les cercles en fonction du nb de vol pour mettre les + petits devant */
+						.sort(function(a,b) {return b.properties[racine_champ + "11"]*1-a.properties[racine_champ + "11"]*1;});
+					
+					<!-- update all countries -->
+					svg.selectAll("path")
+						.transition()
+						.duration(duree_transition)
+						.attr("d", path)
+						.style("fill", function(d) {
+							var value = d.properties[racine_champ + "11"]; 
+							if (value) {
+								return couleur_data;
+							} 
+						});
+				
+				});
+				
+			<!-- On click, update with 2012 data  -->
+			d3.select(document.getElementById("p2"))
+				.on("click", function() {
+
+					<!-- Update all circles --> 
+					svg.selectAll("circle")
+						.transition()
+						.duration(duree_transition)
+					   .attr("r", function(d){
+							var nbvol = d.properties[racine_champ + "12"]
+							var rayon = 3 * Math.sqrt(nbvol/Math.PI);
+							return rayon;
+						})
+						<!-- si la valeur est suffisamment importante, vide le cercle pour qu'on ne voit que le contour -->
+						.style("fill", function(d) {
+							var value = d.properties[racine_champ + "12"]; 
+							if (value > evide) {
+								return "none";
+							} 
+						})
+						/* trie les cercles en fonction du nb de vol pour mettre les + petits devant */
+						.sort(function(a,b) {return b.properties[racine_champ + "12"]*1-a.properties[racine_champ + "12"]*1;});
+					
+					<!-- update all countries -->
+					svg.selectAll("path")
+						.transition()
+						.duration(duree_transition)
+						.attr("d", path)
+						.style("fill", function(d) {
+							var value = d.properties[racine_champ + "12"]; 
+							if (value) {
+								return couleur_data;
+							} 
+						});
+				
+				});
+
+			
+		</script>
+	</body>
+</html>
