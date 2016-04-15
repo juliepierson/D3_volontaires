@@ -1,9 +1,11 @@
-carte01 : 
-2 paragraphes 2011 et 2012, les données changent quand on clique sur le paragraphe
+carte01
+--
+- 2 paragraphes 2011 et 2012, les données changent quand on clique sur le paragraphe
 
-carte02 :
-ronds pour les années, les données changent quand on clique sur le rond
-Les années sont stockées dans une liste
+carte02
+--
+- ronds pour les années, les données changent quand on clique sur le rond
+- Les années sont stockées dans une liste
 
 carte03
 --
